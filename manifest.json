@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "Share to Reeder (macOS)",
+    "name": "Share to Reeder",
     "version": "1.0",
     "description": "Sends the current tab's URL to the macOS Reeder app via native bridge.",
     "permissions": ["nativeMessaging", "activeTab"],
