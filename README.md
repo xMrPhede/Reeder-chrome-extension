@@ -33,7 +33,7 @@ The two components communicate securely using Chromium’s **Native Messaging AP
 
 ### 1. Install the Browser Extension
 
-Install the extension from the Chrome Web Store (link placeholder):
+Install the extension from the Chrome Web Store:
 
 **[Install Reeder Chrome Extension](https://chrome.google.com/webstore/detail/REPLACE_WITH_EXTENSION_ID)**
 
