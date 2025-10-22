@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Share to Reeder</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup">
+      <header>
+        <div class="title">Reeder</div>
+        <img id="settings" src="icons/gear.png" alt="Settings" title="Setup guide" />
+      </header>
+
+      <main>
+        <img id="saveIcon" src="icons/download.png" alt="Share to Reeder" />
+        <div class="label">Share to Reeder</div>
+        <div id="status" class="status"></div>
+      </main>
+
+      <!-- Overlay shown when native app is missing -->
+      <div id="overlay" class="overlay" style="display: none;">
+        <h3>Missing native app</h3>
+        <p>Follow the setup instructions below to install it.</p>
+        <a href="https://github.com/xMrPhede/Reeder-chrome-extension#setup" target="_blank">
+          View setup guide
+        </a>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
