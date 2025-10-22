@@ -1,0 +1,9 @@
+{
+  "name": "com.reeder.macshare",
+  "description": "Bridge between Chrome and macshare",
+  "path": "/usr/local/bin/macshare_host",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://eplkjfilnofceonngoliamdlaoggcaai/"
+  ]
+}

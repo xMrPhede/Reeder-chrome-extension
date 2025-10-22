@@ -1,0 +1,16 @@
+#!/bin/bash
+# Chrome <-> macshare bridge
+
+# Read length prefix (4 bytes) and message body
+read -r -n4 lenbytes
+len=$(printf "%d" "'${lenbytes}")
+payload=$(dd bs=1 count=$len 2>/dev/null)
+
+# Extract URL from the JSON payload
+url=$(echo "$payload" | /usr/bin/plutil -extract url raw -)
+
+# Call your Swift app
+/usr/local/bin/macshare "$url"
+
+# Respond back to Chrome
+printf '\x08\x00\x00\x00{"status":"ok"}'
