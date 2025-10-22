@@ -127,4 +127,21 @@ html, body {
     text-decoration: underline;
   }
   
+  #coffee {
+    position: absolute;
+    bottom: 8px;
+    right: 10px;
+    z-index: 200;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+  
+  #coffee img {
+    width: 22px;
+    height: 22px;
+  }
+  
+  #coffee:hover {
+    opacity: 1;
+  }
   
