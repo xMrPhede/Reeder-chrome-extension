@@ -157,10 +157,6 @@ See the [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-Made with care by **Federico Granata**
-GitHub: [@xMrPhede](https://github.com/xMrPhede)
-
-If you find this project useful, consider
-☕ [Buying me a coffee](https://www.buymeacoffee.com/xmrphede)
+Made with ❤️ by Federico Granata
 
 </div>
