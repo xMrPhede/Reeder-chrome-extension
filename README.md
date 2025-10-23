@@ -64,11 +64,9 @@ This script:
 * Installs the `macshare_host` bridge
 * Registers the native messaging manifest for all supported Chromium browsers
 
-Verify installation by running:
+Before testing the connection, make sure to activate the Share to Reeder extension in MacOS Settings.
 
-```bash
-/usr/local/bin/macshare --help
-```
+You can find it in System Settings → General → Login Items & Extensions → Scroll down for Reeder and activate it.
 
 ---
 
