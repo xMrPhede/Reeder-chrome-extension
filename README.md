@@ -4,8 +4,8 @@
 
 ![Extension Logo](https://github.com/xMrPhede/Reeder-chrome-extension/blob/main/extension/icons/icon128.png)
 
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/your-extension-id)](https://chrome.google.com/webstore/detail/your-extension-id)
-[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/your-extension-id)](https://chrome.google.com/webstore/detail/your-extension-id)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/kdmelpioblnhdphjcafpclindpmcjfgh)](https://chrome.google.com/webstore/detail/kdmelpioblnhdphjcafpclindpmcjfgh)
+[![Chrome Web Store Users](https://img.shields.io/chrome-web-store/users/kdmelpioblnhdphjcafpclindpmcjfgh)](https://chrome.google.com/webstore/detail/kdmelpioblnhdphjcafpclindpmcjfgh)
 [![GitHub license](https://img.shields.io/github/license/xMrPhede/Reeder-chrome-extension)](https://github.com/xMrPhede/Reeder-chrome-extension/blob/main/LICENSE)
 
 </div>
@@ -43,7 +43,7 @@ This project consists of two components:
 
 Install directly from the Chrome Web Store:
 
-**[→ Install Reeder Chrome Extension](https://chrome.google.com/webstore/detail/your-extension-id)**
+**[→ Install Reeder Chrome Extension](https://chrome.google.com/webstore/detail/kdmelpioblnhdphjcafpclindpmcjfgh)**
 
 Once installed, pin the extension to your toolbar.
 On first use, it will check whether the native connector is present and provide setup instructions if not.
