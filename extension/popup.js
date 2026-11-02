@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       "com.reeder.macshare",
       { cmd: "check" },
       (response) => {
-        if (chrome.runtime.lastError || !response || response.status === "missing") {
+        if (chrome.runtime.lastError || !response || response.status !== "ok") {
           console.warn("Native app missing or unreachable:", chrome.runtime.lastError);
           showOverlay();
         } else {
@@ -38,7 +38,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function shareToReeder() {
       status.textContent = "Saving...";
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab?.url) return;
+      if (!tab || !tab.url || !/^https?:\/\//i.test(tab.url)) {
+        status.textContent = "Open an HTTP or HTTPS webpage first.";
+        return;
+      }
   
       chrome.runtime.sendNativeMessage(
         "com.reeder.macshare",
@@ -54,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             status.textContent = "Sent to Reeder!";
             setTimeout(() => (status.textContent = ""), 2500);
           } else {
-            status.textContent = "Unexpected response.";
+            status.textContent = (response && response.error) || "Unexpected response.";
           }
         }
       );
