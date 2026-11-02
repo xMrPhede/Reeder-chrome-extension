@@ -23,7 +23,7 @@ This project consists of two components:
    Adds a toolbar button labeled **“Share to Reeder”** — clicking it sends the current page to your Reeder app.
 
 2. **macOS Native Connector**
-   A small Swift binary (`macshare`) and bridge script (`macshare_host`) that allow the browser to communicate with Reeder through macOS’s Share Extension system.
+   A single Swift native-messaging binary (`macshare_host`) that allow the browser to communicate with Reeder through macOS’s Share Extension system.
 
 ---
 
@@ -58,89 +58,65 @@ Run this command in your Mac Terminal:
 curl -fsSL https://raw.githubusercontent.com/xMrPhede/Reeder-chrome-extension/main/install.sh | bash
 ```
 
-This script:
+Requires macOS, Reeder, and Xcode Command Line Tools (`xcode-select --install`).
+The installer downloads the Swift source, compiles it without administrator privileges,
+and installs it under `~/Library/Application Support/ReederChromeConnector/`.
+It registers Chrome only by default and uses the Chrome Web Store extension ID.
+Existing connector files and the selected browser's manifest are backed up before replacement.
+Compilation failures leave the existing installation untouched.
 
-* Compiles and installs the `macshare` Swift binary
-* Installs the `macshare_host` bridge
-* Registers the native messaging manifest for all supported Chromium browsers
+Enable **Add to Reeder** in System Settings → General → Login Items & Extensions
+(the location may vary by macOS version), then open the browser extension.
+Only HTTP and HTTPS webpages can be shared.
 
-Before testing the connection, make sure to activate the Share to Reeder extension in MacOS Settings.
-
-You can find it in System Settings → General → Login Items & Extensions → Scroll down for Reeder and activate it.
-
----
-
-## 🛠 Manual Native App Installation
-
-If you experience issues with the installation script, follow these steps manually:
-
-### 1. Compile the Swift App
+### Install from a local checkout or choose another browser
 
 ```bash
 git clone https://github.com/xMrPhede/Reeder-chrome-extension.git
 cd Reeder-chrome-extension
-swiftc macshare.swift -o /usr/local/bin/macshare
-sudo chmod +x /usr/local/bin/macshare
+bash install.sh --source-dir .
+# For another browser, run again with one of:
+bash install.sh --source-dir . --browser brave
+bash install.sh --source-dir . --browser edge
 ```
 
-### 2. Install the Bridge Script
+Supported browser names are `chrome`, `brave`, `edge`, `vivaldi`, `arc`,
+`chromium`, and `opera`. Each run registers only the chosen browser.
+Chrome has been tested end to end; other browsers' registration paths still
+need verification on their respective installations.
 
-```bash
-sudo cp macshare_host /usr/local/bin/macshare_host
-sudo chmod +x /usr/local/bin/macshare_host
-```
+For an unpacked extension, add `--extension-id YOUR_EXTENSION_ID`, using the
+32-character ID shown on the browser's extensions page. Generated manifests
+contain an absolute binary path and an exact `chrome-extension://ID/` allowlist;
+no placeholder editing or `edge-extension://` origin is needed.
+The root `com.reeder.macshare.json` is a legacy system-path example; use the
+installer to generate the correct manifest for your account.
 
-### 3. Register the Native Messaging Host
-
-Copy the manifest file to your browser’s native messaging directory:
-
-```bash
-# Chrome
-mkdir -p ~/Library/Application\ Support/Google/Chrome/NativeMessagingHosts/
-cp com.reeder.macshare.json ~/Library/Application\ Support/Google/Chrome/NativeMessagingHosts/
-
-# Edge
-mkdir -p ~/Library/Application\ Support/Microsoft\ Edge/NativeMessagingHosts/
-cp com.reeder.macshare.json ~/Library/Application\ Support/Microsoft\ Edge/NativeMessagingHosts/
-
-# Brave
-mkdir -p ~/Library/Application\ Support/BraveSoftware/Brave-Browser/NativeMessagingHosts/
-cp com.reeder.macshare.json ~/Library/Application\ Support/BraveSoftware/Brave-Browser/NativeMessagingHosts/
-```
-
-Make sure the manifest points to the correct binary path:
-
-```json
-{
-  "name": "com.reeder.macshare",
-  "description": "Reeder macOS connector",
-  "path": "/usr/local/bin/macshare_host",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://<your-extension-id>/"
-  ]
-}
-```
+The downloaded installer obtains source from `main`. To inspect the code first,
+use a local checkout and `--source-dir .`; you can check out a specific commit
+before running it.
 
 ---
 
 ## 🧩 How It Works
 
 1. The extension sends the current tab’s URL to the native host `com.reeder.macshare`.
-2. The host (`macshare_host`) forwards the URL to the Swift binary (`macshare`).
-3. The Swift app triggers macOS’s Reeder Share Extension.
+2. The Swift host (`macshare_host`) validates the URL and the native-message framing.
+3. The host triggers macOS’s Reeder Share Extension and waits for its completion callback.
 4. Reeder saves the page to your reading list (local or iCloud).
 
 ---
 
 ## ❌ Uninstallation
 
-Remove the native components by running:
+Move the following to the macOS Trash:
 
-```bash
-sudo rm -f /usr/local/bin/macshare /usr/local/bin/macshare_host
-rm -f ~/Library/Application\ Support/*/NativeMessagingHosts/com.reeder.macshare.json
-```
+* `~/Library/Application Support/ReederChromeConnector/`
+* `com.reeder.macshare.json` inside the `NativeMessagingHosts` folder for each
+  browser you registered (Chrome: `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/`).
+
+If you used the old installer, `/usr/local/bin/macshare` and
+`/usr/local/bin/macshare_host` may also remain and can be removed separately.
 
 Then remove the extension from your browser as usual.
 

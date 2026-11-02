@@ -1,89 +1,66 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# =====================================================
-# Reeder Chrome Extension - Native Connector Installer
-# Author: Federico Granata
-# =====================================================
-
-echo ""
-echo "🚀 Installing Reeder native connector for macOS..."
-echo "===================================================="
-
-# --- Variables ---
-APP_NAME="Reeder"
-HOST_NAME="com.reeder.macshare"
-INSTALL_DIR="/usr/local/bin"
-SUPPORT_DIR="$HOME/Library/Application Support"
-SWIFT_SRC="macshare.swift"
-HOST_SCRIPT="macshare_host"
-MANIFEST_TEMPLATE="native-messaging-host.json"
-
-# --- Ensure Swift is available ---
-if ! command -v swiftc &>/dev/null; then
-  echo "❌ Swift compiler not found. Please install Xcode Command Line Tools first."
-  echo "Run: xcode-select --install"
-  exit 1
-fi
-
-# --- Create binaries directory ---
-sudo mkdir -p "$INSTALL_DIR"
-sudo chmod 755 "$INSTALL_DIR"
-
-# --- Compile Swift binary ---
-echo "🛠  Compiling native Swift binary..."
-if [ -f "$SWIFT_SRC" ]; then
-  sudo swiftc "$SWIFT_SRC" -o "$INSTALL_DIR/macshare"
-  echo "✅ macshare compiled successfully."
-else
-  echo "❌ Swift source file '$SWIFT_SRC' not found."
-  exit 1
-fi
-
-# --- Install host bridge ---
-if [ -f "$HOST_SCRIPT" ]; then
-  sudo cp "$HOST_SCRIPT" "$INSTALL_DIR/"
-  sudo chmod +x "$INSTALL_DIR/$HOST_SCRIPT"
-  echo "✅ Host bridge installed."
-else
-  echo "❌ Host bridge script '$HOST_SCRIPT' not found."
-  exit 1
-fi
-
-# --- Install manifests for all Chromium browsers ---
-echo "🧩 Registering native messaging manifests..."
-
-browsers=("Google/Chrome" "BraveSoftware/Brave-Browser" "Microsoft Edge" "Vivaldi" "Arc" "Chromium")
-for browser in "${browsers[@]}"; do
-  browser_dir="$SUPPORT_DIR/$browser/NativeMessagingHosts"
-  mkdir -p "$browser_dir"
-  manifest_path="$browser_dir/$HOST_NAME.json"
-
-  cat >"$manifest_path" <<EOF
-{
-  "name": "$HOST_NAME",
-  "description": "Native messaging host for Reeder Chrome Extension",
-  "path": "$INSTALL_DIR/$HOST_SCRIPT",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://__EXTENSION_ID__/","edge-extension://__EXTENSION_ID__/"
-  ]
-}
-EOF
-  echo "✅ Manifest installed for: $browser"
+# User-level installation: no administrator privileges or system permission changes.
+extension_id="kdmelpioblnhdphjcafpclindpmcjfgh"
+browser="chrome"
+source_dir=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --browser|--extension-id|--source-dir)
+      [ "$#" -ge 2 ] || { echo "Missing value for $1" >&2; exit 1; }
+      case "$1" in
+        --browser) browser="$2" ;;
+        --extension-id) extension_id="$2" ;;
+        --source-dir) source_dir="$2" ;;
+      esac
+      shift 2 ;;
+    *) echo "Usage: bash install.sh [--browser chrome|brave|edge|vivaldi|arc|chromium|opera] [--extension-id ID] [--source-dir PATH]" >&2; exit 1 ;;
+  esac
 done
-
-# --- Permissions ---
-sudo chmod +x "$INSTALL_DIR/macshare"
-sudo chmod +x "$INSTALL_DIR/$HOST_SCRIPT"
-
-# --- Success message ---
-echo ""
-echo "🎉 Installation complete!"
-echo "You can now use the 'Share to Reeder' button in your browser."
-echo ""
-echo "If you installed the extension manually from GitHub, replace '__EXTENSION_ID__' in the manifests"
-echo "For more info on how to perform this, visit https://github.com/xMrPhede/Reeder-chrome-extension#setup"
-echo "with your actual extension ID (found in chrome://extensions under 'Details')."
-echo ""
-echo "Done ✅"
+[[ "$extension_id" =~ ^[a-p]{32}$ ]] || { echo "Invalid extension ID (expected 32 letters a-p)." >&2; exit 1; }
+case "$browser" in
+  chrome) browser_path="Google/Chrome" ;;
+  brave) browser_path="BraveSoftware/Brave-Browser" ;;
+  edge) browser_path="Microsoft Edge" ;;
+  vivaldi) browser_path="Vivaldi" ;;
+  arc) browser_path="Arc/User Data" ;;
+  chromium) browser_path="Chromium" ;;
+  opera) browser_path="com.operasoftware.Opera" ;;
+  *) echo "Unsupported browser: $browser" >&2; exit 1 ;;
+esac
+[ "$(uname -s)" = Darwin ] || { echo "This connector requires macOS." >&2; exit 1; }
+command -v swiftc >/dev/null || { echo "Install Xcode Command Line Tools first: xcode-select --install" >&2; exit 1; }
+support="$HOME/Library/Application Support"
+install_dir="$support/ReederChromeConnector"
+manifest_dir="$support/$browser_path/NativeMessagingHosts"
+manifest="$manifest_dir/com.reeder.macshare.json"
+# Compile and generate JSON before touching the existing installation.
+tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/reeder-install.XXXXXX")"
+trap 'rm -rf "$tmp_dir"' EXIT
+if [ -n "$source_dir" ]; then
+  cp "$source_dir/macshare.swift" "$tmp_dir/macshare.swift"
+else
+  curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
+    https://raw.githubusercontent.com/xMrPhede/Reeder-chrome-extension/main/macshare.swift \
+    -o "$tmp_dir/macshare.swift"
+fi
+swiftc -module-cache-path "$tmp_dir/module-cache" "$tmp_dir/macshare.swift" -o "$tmp_dir/macshare_host"
+"$tmp_dir/macshare_host" --manifest "$install_dir/macshare_host" "$extension_id" > "$tmp_dir/manifest.json"
+mkdir -p "$install_dir" "$manifest_dir"
+backup_dir="$(mktemp -d "$install_dir/backup.XXXXXX")"
+for name in macshare_host macshare.swift; do
+  if [ -e "$install_dir/$name" ]; then cp -p "$install_dir/$name" "$backup_dir/$name"; fi
+done
+if [ -e "$manifest" ]; then cp -p "$manifest" "$backup_dir/com.reeder.macshare.json"; fi
+# Copy to temporary siblings, then rename so readers never see partial files.
+install -m 755 "$tmp_dir/macshare_host" "$install_dir/.macshare_host.new"
+install -m 644 "$tmp_dir/macshare.swift" "$install_dir/.macshare.swift.new"
+install -m 644 "$tmp_dir/manifest.json" "$manifest_dir/.com.reeder.macshare.json.new"
+mv -f "$install_dir/.macshare_host.new" "$install_dir/macshare_host"
+mv -f "$install_dir/.macshare.swift.new" "$install_dir/macshare.swift"
+mv -f "$manifest_dir/.com.reeder.macshare.json.new" "$manifest"
+echo "Installed connector: $install_dir/macshare_host"
+echo "Registered for $browser: $manifest"
+echo "Previous files (if any): $backup_dir"
+echo "Enable Reeder's Add to Reeder sharing extension in System Settings, then open Share to Reeder in your browser."
